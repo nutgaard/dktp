@@ -1,4 +1,4 @@
-# dkpt
+# dktp
 
 To install dependencies:
 
