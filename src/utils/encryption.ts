@@ -60,7 +60,7 @@ export class Encryption {
     }
 }
 
-function getRandomBits(bits: number): ArrayBuffer {
+function getRandomBits(bits: number): NodeJS.TypedArray {
     const data = new Uint8Array(bits / 8);
     crypto.getRandomValues(data);
     return data;
@@ -72,7 +72,7 @@ async function createCryptoKey(data: ArrayBuffer, keyUsages: KeyUsage[]): Promis
 
 async function expandAndSplitPassword(
     password: Password,
-    salt: ArrayBuffer,
+    salt: NodeJS.TypedArray,
     iterations: number = 100_000,
 ): Promise<[CryptoKey, PasswordVerifier]> {
     const encoder = new TextEncoder();

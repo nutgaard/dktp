@@ -1,3 +1,4 @@
+import 'bun';
 import { program } from '@caporal/core';
 import { registerTestCmd } from './commands/test';
 

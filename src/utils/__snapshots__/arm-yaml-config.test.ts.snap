@@ -1,0 +1,149 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`arm-yaml-test should return parsed config 1`] = `
+"{
+  "properties": {
+    "configuration": {
+      "secrets": [
+        {
+          "name": "secret-name",
+          "keyVaultUrl": "https://~{KEYVAULT_NAME}.url-to-keyvault.com",
+          "identity": "System"
+        }
+      ]
+    },
+    "template": {
+      "containers": [
+        {
+          "name": "first-container",
+          "resources": {
+            "cpu": "~{cpu-0.5}",
+            "memory": "~{memory-1.0Gi}"
+          },
+          "env": [
+            {
+              "name": "ENV",
+              "value": "testing"
+            },
+            {
+              "name": "PASSWORD",
+              "secretRef": "secret-name"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}"
+`;
+
+exports[`arm-yaml-test should inject values into string, and use default values if needed 1`] = `
+"{
+  "properties": {
+    "configuration": {
+      "secrets": [
+        {
+          "name": "secret-name",
+          "keyVaultUrl": "https://mysecrets.url-to-keyvault.com",
+          "identity": "System"
+        }
+      ]
+    },
+    "template": {
+      "containers": [
+        {
+          "name": "first-container",
+          "resources": {
+            "cpu": 0.5,
+            "memory": "1.0Gi"
+          },
+          "env": [
+            {
+              "name": "ENV",
+              "value": "testing"
+            },
+            {
+              "name": "PASSWORD",
+              "secretRef": "secret-name"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}"
+`;
+
+exports[`arm-yaml-test should inject values into string, and prefer provided values 1`] = `
+"{
+  "properties": {
+    "configuration": {
+      "secrets": [
+        {
+          "name": "secret-name",
+          "keyVaultUrl": "https://mysecrets.url-to-keyvault.com",
+          "identity": "System"
+        }
+      ]
+    },
+    "template": {
+      "containers": [
+        {
+          "name": "first-container",
+          "resources": {
+            "cpu": 1,
+            "memory": "1.5Gi"
+          },
+          "env": [
+            {
+              "name": "ENV",
+              "value": "testing"
+            },
+            {
+              "name": "PASSWORD",
+              "secretRef": "secret-name"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}"
+`;
+
+exports[`arm-yaml-test should variable name as default if not specified with a default 1`] = `
+"{
+  "properties": {
+    "configuration": {
+      "secrets": [
+        {
+          "name": "secret-name",
+          "keyVaultUrl": "https://KEYVAULT_NAME.url-to-keyvault.com",
+          "identity": "System"
+        }
+      ]
+    },
+    "template": {
+      "containers": [
+        {
+          "name": "first-container",
+          "resources": {
+            "cpu": 0.5,
+            "memory": "1.0Gi"
+          },
+          "env": [
+            {
+              "name": "ENV",
+              "value": "testing"
+            },
+            {
+              "name": "PASSWORD",
+              "secretRef": "secret-name"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}"
+`;

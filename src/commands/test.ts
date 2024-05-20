@@ -1,5 +1,5 @@
 import type { Program } from '@caporal/core';
-import { ActionParameters, Logger, ParsedArgumentsObject, ParsedOptions } from 'types';
+import { ActionParameters } from 'types';
 
 export function registerTestCmd(program: Program) {
     program
@@ -12,7 +12,15 @@ export function registerTestCmd(program: Program) {
         .action(test);
 }
 
-function test({ logger, args, options }: ActionParameters) {
-    logger.info(`Testing: ${args.src}`);
-    logger.info(`Testing: ${options.format}`);
+async function test({ logger, args, options }: ActionParameters) {
+    const src: string = args.src.toString();
+    const file = Bun.file(src);
+
+    logger.info(`Length of ${file.name} is ${file.length}`);
+    const content = await file.text();
+    const lines = content.split('\n');
+    const preamble = lines.slice(0, 5).join('\n');
+    logger.info('-'.repeat(20));
+    logger.info(preamble);
+    logger.info('-'.repeat(20));
 }
