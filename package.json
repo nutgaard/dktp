@@ -1,0 +1,55 @@
+{
+  "name": "dkpt",
+  "version": "0.0.0-development",
+  "description": "A simple cli to interact with Azure ContainerApps with arm/yaml templates",
+  "keywords": [
+    "containerapp",
+    "arm",
+    "yaml",
+    "azure"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nutgaard/dktp"
+  },
+  "main": "./lib/index.js",
+  "bin": {
+    "dktp": "dktp"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Nicklas Utgaard",
+  "license": "MIT",
+  "scripts": {
+    "prepare": "husky",
+    "commit": "git-cz",
+    "test": "vitest --coverage",
+    "build": "rm -rf lib && tsc -p ."
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@vitest/coverage-v8": "^1.6.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.0.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@caporal/core": "^2.0.7"
+  },
+  "lint-staged": {
+    "*.{ts,js}": "prettier --write"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
+  }
+}
