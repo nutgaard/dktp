@@ -1,26 +1,34 @@
-import type { Program } from '@caporal/core';
-import { ActionParameters } from 'types';
+import { ArgumentsCamelCase, CommandModule } from 'yargs';
 
-export function registerTestCmd(program: Program) {
-    program
-        .command('test', 'Testing setup')
-        .argument('<src>', 'source folder')
-        .option('-f, --format <format>', 'output format', {
-            default: 'formatting',
-            validator: ['formatting', 'other'],
-        })
-        .action(test);
-}
+type Args = { source: string; format?: string };
+export const testCommand: CommandModule<{}, Args> = {
+    command: 'test <source>',
+    describe: 'Testing setup',
+    builder(yargs) {
+        return yargs
+            .positional('source', {
+                describe: 'Source folder to read',
+                type: 'string',
+                demandOption: true,
+            })
+            .option('format', {
+                type: 'string',
+                default: 'formatting',
+                description: 'output format',
+                alias: 'f',
+                choices: ['formatting', 'other'],
+            });
+    },
+    async handler(args: ArgumentsCamelCase<Args>) {
+        const src: string = args.source.toString();
+        const file = Bun.file(src);
 
-async function test({ logger, args, options }: ActionParameters) {
-    const src: string = args.src.toString();
-    const file = Bun.file(src);
-
-    logger.info(`Length of ${file.name} is ${file.length}`);
-    const content = await file.text();
-    const lines = content.split('\n');
-    const preamble = lines.slice(0, 5).join('\n');
-    logger.info('-'.repeat(20));
-    logger.info(preamble);
-    logger.info('-'.repeat(20));
-}
+        console.info(`Length of ${file.name} is ${file.size}`);
+        const content = await file.text();
+        const lines = content.split('\n');
+        const preamble = lines.slice(0, 5).join('\n');
+        console.info('-'.repeat(20));
+        console.info(preamble);
+        console.info('-'.repeat(20));
+    },
+};
