@@ -1,9 +1,10 @@
 import * as YAML from 'yaml';
 import { ARMYamlTemplate } from './arm-yaml-config.types';
+import { getFS } from './ifs';
 
 export class ArmYamlConfig {
     static async from(file: string): Promise<ArmYamlConfig> {
-        const content = await Bun.file(file).text();
+        const content = await getFS().file(file).text();
         return new ArmYamlConfig(content);
     }
     private content: string;
