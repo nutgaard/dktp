@@ -3,10 +3,10 @@ import { Encryption } from './encryption';
 
 describe('encryption', () => {
     const password = Encryption.asPassword('password1231');
-    const plaintext = Encryption.asPlaintext(`
+    const plaintext = `
           this is some text
           over multiple lines!!
-    `);
+    `;
 
     test('encryption should produce cipherdata', async () => {
         const cipherdata = await Encryption.encrypt(password, plaintext);
@@ -30,7 +30,7 @@ describe('encryption', () => {
     test('larger amount of data should work', async () => {
         const longline =
             'ENVIRONMENT_VARIABLE=https://url-to-random-subdomain.with-multiple-subdomains.awesomecloudplattform.io\n';
-        const plaintext = Encryption.asPlaintext(longline.repeat(1000));
+        const plaintext = longline.repeat(1000);
         const cipherdata = await Encryption.encrypt(password, plaintext);
         const decrypted = await Encryption.decrypt(password, cipherdata);
 

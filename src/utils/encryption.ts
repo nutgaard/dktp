@@ -1,6 +1,7 @@
+import { webcrypto as crypto } from 'node:crypto';
+
 export type Password = string & { __type: 'password' };
 export type PasswordVerifier = string & { __type: 'password_verifier' };
-export type Plaintext = string & { __type: 'plaintext' };
 export type Ciphertext = string & { __type: 'ciphertext' };
 export type CipherData = {
     ciphertext: Ciphertext;
@@ -14,11 +15,7 @@ export class Encryption {
         return password as Password;
     }
 
-    static asPlaintext(data: string): Plaintext {
-        return data as Plaintext;
-    }
-
-    static async encrypt(password: Password, data: Plaintext): Promise<CipherData> {
+    static async encrypt(password: Password, data: string): Promise<CipherData> {
         const encoder = new TextEncoder();
         const salt = getRandomBits(128);
         const [key, verifier] = await expandAndSplitPassword(password, salt);
@@ -39,7 +36,7 @@ export class Encryption {
         };
     }
 
-    static async decrypt(password: Password, data: CipherData): Promise<Plaintext> {
+    static async decrypt(password: Password, data: CipherData): Promise<string> {
         const decoder = new TextDecoder();
         const salt = new Uint8Array(Buffer.from(data.salt, 'base64'));
         const iv = new Uint8Array(Buffer.from(data.iv, 'base64'));
@@ -56,7 +53,7 @@ export class Encryption {
 
         const plaintext = await crypto.subtle.decrypt(params, key, ciphertext);
 
-        return decoder.decode(plaintext) as Plaintext;
+        return decoder.decode(plaintext);
     }
 }
 
