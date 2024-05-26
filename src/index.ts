@@ -1,6 +1,10 @@
-import 'bun';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
-import { testCommand } from './commands/test';
+import { program } from 'commander';
+import { wrapCommand } from './commands/wrap';
 
-yargs(hideBin(process.argv)).scriptName('dktp').command(testCommand).help().demandCommand().parse();
+program
+    .name('dktp')
+    .description('CLI to help working dktp apps')
+    .addCommand(wrapCommand)
+    .showHelpAfterError()
+    .showSuggestionAfterError()
+    .parse();
