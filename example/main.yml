@@ -1,0 +1,71 @@
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      allowInsecure: false
+      targetPort: 8080
+    secrets:
+      - name: subscription-key
+        keyVaultUrl: https://${kvault_name}.com/secrets/SubscriptionKey
+        identity: System
+  template:
+    scale:
+      minReplicas: ${minReplicas-2}
+      maxReplicas: ${maxReplicas-4}
+      rules:
+        - name: cpu-scaling
+          custom:
+            type: cpu
+            metadata:
+              type: Utilization
+              value: 50
+    containers:
+      - image: docker.io/app:${IMAGE_TAG}
+        name: frontend
+        resources:
+          cpu: ${app_cpu-0.5}
+          memory: ${app_memory-1.0Gi}
+        probes:
+          - type: liveness
+            httpGet:
+              path: "/isAlive"
+              port: 3000
+            initialDelaySeconds: 7
+            periodSeconds: 3
+          - type: readiness
+            httpGet:
+              path: "/isReady"
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 3
+        env:
+          - name: STATIC_ENV_VAR
+            value: "static env var"
+          - name: DYNAMIC_ENV_VAR
+            value: ${DYNAMIC_ENV_VAR}
+
+          - name: SECRET_FROM_KEYVAULT
+            secretRef: subscription-key
+
+      - image: docker.io/app-proxy:${IMAGE_TAG}
+        name: app-proxy
+        resources:
+          cpu: ${proxy_cpu-0.25}
+          memory: ${proxy_memory-0.5Gi}
+        probes:
+          - type: liveness
+            httpGet:
+              path: "/isAlive"
+              port: 8080
+            initialDelaySeconds: 7
+            periodSeconds: 3
+          - type: readiness
+            httpGet:
+              path: "/isReady"
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 3
+        env:
+          - name: HOST
+            value: http://localhost:3000
