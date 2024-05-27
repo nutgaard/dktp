@@ -1,4 +1,4 @@
-export type TargetPlatform = 'node'; // | 'bun';
+export type TargetPlatform = 'node' | 'bun';
 export const TARGET_PLATFORM: TargetPlatform = 'node';
 
-export const DEBUG = false;
+export const AZ_MOCK = true;
