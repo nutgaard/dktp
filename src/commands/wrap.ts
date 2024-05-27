@@ -6,18 +6,22 @@ import { AZCli } from '../utils/AZCli';
 import { ARMYamlEnv, isEnvSecretRef } from '../utils/arm-yaml-config.types';
 import { promptPassword } from '../prompts/promptPassword';
 import { Encryption } from '../utils/encryption';
+import { exitInvariant } from '../utils/invariant';
+import logger from '../utils/logger';
 
 export const wrapCommand: Command = program
     .createCommand('wrap')
     .description('Download secrets, and encrypt environment')
-    .argument('configfile', 'Path to dktp yaml file')
+    .argument('<configfile>', 'Path to dktp yaml file')
     .option('-c, --container <container_name>', 'Container name to process (defaults to create a combined env file)')
     .option('-e, --env <env_file>', 'Envfile to use for interpolation')
     .action(async (configfile, options) => {
-        await AZCli.assertLogin();
-        const password = await promptPassword();
-        console.log('options', options);
+        logger.info('Verifying AZ CLI status');
+        const azcli = await AZCli.assertLogin();
+        exitInvariant(azcli, `Could not resolve AZ cli, or you're not logged in`);
+        logger.info('AZ CLI verified');
 
+        logger.info('Resolving container configuration');
         const config = await ArmYamlConfig.from(configfile);
         if (options.env) {
             const envContent = await getFS().file(options.env).text();
@@ -31,12 +35,18 @@ export const wrapCommand: Command = program
             const container = config
                 .getConfig()
                 .properties.template.containers.find((it) => it.name === options.container);
-            if (!container) throw new Error(`Could not find container: ${options.container}`);
+            exitInvariant(container, `Could not find container: ${options.container}`);
             containerEnvs = container.env;
         }
+        logger.info(
+            `Found container environment with ${containerEnvs.length} variables, and ${secrets.length} secrets to resolve`,
+        );
 
+        const password = await promptPassword();
         const keyvaultValues: Record<string, string> = {};
+        logger.info(`Resolving ${secrets.length} secrets...`);
         for (const secret of secrets) {
+            logger.info(`Resolving ${secret.name}`);
             const secretValue = await AZCli.fetchSecret(secret);
             keyvaultValues[secret.name] = secretValue.value;
         }
@@ -54,6 +64,7 @@ export const wrapCommand: Command = program
             .map(([key, value]) => `${key}="${value}"`)
             .join('\n');
 
+        logger.info(`Creating vault-env content`);
         const encryptedContent = await Encryption.encrypt(password, envFileContent);
 
         console.log(JSON.stringify(encryptedContent, null, 2));
