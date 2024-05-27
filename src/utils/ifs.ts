@@ -7,6 +7,7 @@ type IFs = {
     name?: string;
     size: number;
     text(): Promise<string>;
+    json(): Promise<any>;
 };
 
 export function getFS(type: TargetPlatform = TARGET_PLATFORM) {
@@ -38,6 +39,10 @@ function nodeRead(path: string): IFs {
         size: fsSync.statSync(path).size,
         async text(): Promise<string> {
             return fs.readFile(path, 'utf-8').then((it) => it.toString());
+        },
+        async json(): Promise<any> {
+            const content = await fs.readFile(path, 'utf-8').then((it) => it.toString());
+            return JSON.parse(content);
         },
     };
 }
