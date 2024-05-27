@@ -1,4 +1,5 @@
 import { webcrypto as crypto } from 'node:crypto';
+import { exitInvariant } from './invariant';
 
 export type Password = string & { __type: 'password' };
 export type PasswordVerifier = string & { __type: 'password_verifier' };
@@ -42,7 +43,7 @@ export class Encryption {
         const iv = new Uint8Array(Buffer.from(data.iv, 'base64'));
 
         const [key, verifier] = await expandAndSplitPassword(password, salt);
-        if (verifier !== data.verifier) throw new Error('Password mistmach');
+        exitInvariant(verifier === data.verifier, 'Wrong password');
 
         const ciphertext = new Uint8Array(Buffer.from(data.ciphertext, 'base64'));
 
