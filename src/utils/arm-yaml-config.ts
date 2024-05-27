@@ -1,6 +1,7 @@
 import * as YAML from 'yaml';
 import { ARMYamlTemplate } from './arm-yaml-config.types';
 import { getFS } from './ifs';
+import { envsubst } from './envsubst';
 
 export class ArmYamlConfig {
     static async from(file: string): Promise<ArmYamlConfig> {
@@ -24,16 +25,7 @@ export class ArmYamlConfig {
 
     interpolateWithEnvValues(env: NodeJS.ProcessEnv): ArmYamlConfig {
         this.config = null;
-        this.content = this.content.replaceAll(/\$\{\s*([^-}]+(?:-[^}]+)?)\s*\}/g, (_, match) => {
-            let key: string = match;
-            let defaultValue: string | undefined = match;
-            if (match.includes('-')) {
-                [key, defaultValue] = match.split('-');
-            }
-
-            return env[key] ?? defaultValue ?? key;
-        });
-
+        this.content = envsubst(this.content, env, '-');
         return this;
     }
 }
