@@ -118,7 +118,7 @@ exports[`arm-yaml-test should variable name as default if not specified with a d
       "secrets": [
         {
           "name": "secret-name",
-          "keyVaultUrl": "https://KEYVAULT_NAME.url-to-keyvault.com",
+          "keyVaultUrl": "https://~{KEYVAULT_NAME}.url-to-keyvault.com",
           "identity": "System"
         }
       ]

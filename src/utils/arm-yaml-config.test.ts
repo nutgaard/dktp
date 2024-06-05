@@ -65,7 +65,7 @@ describe('arm-yaml-test', () => {
         const config = new ArmYamlConfig(yaml).interpolateWithEnvValues({}).getConfig();
 
         const keyvaultUrl = config.properties.configuration.secrets.at(0)?.keyVaultUrl;
-        expect(keyvaultUrl).toBe('https://KEYVAULT_NAME.url-to-keyvault.com');
+        expect(keyvaultUrl).toBe('https://${KEYVAULT_NAME}.url-to-keyvault.com');
         expectMatchSnapshot(config);
     });
 
