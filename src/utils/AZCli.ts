@@ -14,7 +14,7 @@ export class AZCli {
         }
     }
     static async fetchSecret(secret: ARMYamlSecret): Promise<{ value: string }> {
-        if (AZ_MOCK) return { value: secret.name.toUpperCase() };
+        if (AZ_MOCK) return { value: secret.name.toUpperCase().split('').reverse().join('') };
 
         return getExec().run(`az keyvault secret show --id ${secret.keyVaultUrl}`).json();
     }
