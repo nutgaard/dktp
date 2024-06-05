@@ -17,24 +17,12 @@ export const runCommand: Command = program
         const unlockfile = path.join(dirname, '.dktp.unlocked');
         const vaultFile: CipherData = await fs.file(options.env).json();
 
-        const unlockdata: KeyAndVerifier | null = await getUnlockData(unlockfile, vaultFile.verifier);
-
-        let key;
-        let verifier;
-        let expandedPassword;
-        if (unlockdata) {
-            [key, verifier] = unlockdata;
-        } else {
-            const salt = new Uint8Array(Buffer.from(vaultFile.salt, 'base64'));
-            const password = await promptPassword();
-            expandedPassword = await Encryption.expandPasswordWithSalt(password, salt);
-            [key, verifier] = await Encryption.createKeyVerifier(expandedPassword);
-        }
-
+        const { keyVerifier, updatedValue } = await getKeyVerifier(unlockfile, vaultFile);
+        const [key, verifier] = keyVerifier;
         const content = await Encryption.decryptWithKey(key, verifier, vaultFile);
 
-        if (expandedPassword) {
-            await fs.write(unlockfile, Buffer.from(expandedPassword));
+        if (updatedValue) {
+            await fs.write(unlockfile, Buffer.from(updatedValue));
         }
 
         const env = dotenv.parse(content);
@@ -42,6 +30,26 @@ export const runCommand: Command = program
 
         getExec().spawn(cmds);
     });
+
+async function getKeyVerifier(
+    unlockfile: string,
+    data: CipherData,
+): Promise<{ keyVerifier: KeyAndVerifier; updatedValue?: ArrayBuffer }> {
+    const unlockdata: KeyAndVerifier | null = await getUnlockData(unlockfile, data.verifier);
+    if (unlockdata != null) {
+        return {
+            keyVerifier: unlockdata,
+            updatedValue: undefined,
+        };
+    }
+
+    const salt = new Uint8Array(Buffer.from(data.salt, 'base64'));
+    const password = await promptPassword();
+    const expandedPassword = await Encryption.expandPasswordWithSalt(password, salt);
+    const keyVerifier = await Encryption.createKeyVerifier(expandedPassword);
+
+    return { keyVerifier, updatedValue: expandedPassword };
+}
 
 const MAX_DURATION_UNLOCK_FILE = Duration.ofHours(8);
 async function getUnlockData(path: string, vaultVerifier: PasswordVerifier): Promise<KeyAndVerifier | null> {
