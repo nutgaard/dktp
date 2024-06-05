@@ -10,17 +10,60 @@ export type CipherData = {
     iv: string;
     verifier: PasswordVerifier;
 };
+export type KeyAndVerifier = [CryptoKey, PasswordVerifier];
 
 export class Encryption {
     static asPassword(password: string): Password {
         return password as Password;
     }
 
-    static async encrypt(password: Password, data: string): Promise<CipherData> {
+    static async expandPasswordWithSalt(
+        password: Password,
+        salt: NodeJS.TypedArray,
+        iterations: number = 100_000,
+    ): Promise<ArrayBuffer> {
         const encoder = new TextEncoder();
-        const salt = getRandomBits(128);
-        const [key, verifier] = await expandAndSplitPassword(password, salt);
 
+        const key: CryptoKey = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, [
+            'deriveBits',
+        ]);
+
+        return crypto.subtle.deriveBits(
+            {
+                name: 'PBKDF2',
+                hash: 'SHA-512',
+                salt,
+                iterations,
+            },
+            key,
+            512,
+        );
+    }
+
+    static async createKeyVerifier(derivedBits: ArrayBuffer): Promise<KeyAndVerifier> {
+        const firstHalf = derivedBits.slice(0, 32);
+        const lastHalf = derivedBits.slice(32);
+
+        const cryptokey: CryptoKey = await createCryptoKey(firstHalf, ['encrypt', 'decrypt']);
+        const verifier: PasswordVerifier = Buffer.from(lastHalf).toString('base64') as PasswordVerifier;
+
+        return [cryptokey, verifier];
+    }
+
+    static async encrypt(password: Password, data: string): Promise<CipherData> {
+        const salt = getRandomBits(128);
+        const expandedPassword = await Encryption.expandPasswordWithSalt(password, salt);
+        const [key, verifier] = await Encryption.createKeyVerifier(expandedPassword);
+        return Encryption.encryptWithKey(key, verifier, salt, data);
+    }
+
+    static async encryptWithKey(
+        key: CryptoKey,
+        verifier: PasswordVerifier,
+        salt: NodeJS.TypedArray,
+        data: string,
+    ): Promise<CipherData> {
+        const encoder = new TextEncoder();
         const iv = getRandomBits(256);
         const params: AesGcmParams = {
             name: 'AES-GCM',
@@ -38,14 +81,19 @@ export class Encryption {
     }
 
     static async decrypt(password: Password, data: CipherData): Promise<string> {
-        const decoder = new TextDecoder();
         const salt = new Uint8Array(Buffer.from(data.salt, 'base64'));
-        const iv = new Uint8Array(Buffer.from(data.iv, 'base64'));
+        const expandedPassword = await Encryption.expandPasswordWithSalt(password, salt);
+        const [key, verifier] = await Encryption.createKeyVerifier(expandedPassword);
 
-        const [key, verifier] = await expandAndSplitPassword(password, salt);
+        return Encryption.decryptWithKey(key, verifier, data);
+    }
+
+    static async decryptWithKey(key: CryptoKey, verifier: PasswordVerifier, data: CipherData): Promise<string> {
         exitInvariant(verifier === data.verifier, 'Wrong password');
 
+        const decoder = new TextDecoder();
         const ciphertext = new Uint8Array(Buffer.from(data.ciphertext, 'base64'));
+        const iv = new Uint8Array(Buffer.from(data.iv, 'base64'));
 
         const params: AesGcmParams = {
             name: 'AES-GCM',
@@ -66,35 +114,4 @@ function getRandomBits(bits: number): NodeJS.TypedArray {
 
 async function createCryptoKey(data: ArrayBuffer, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return crypto.subtle.importKey('raw', data, { name: 'AES-GCM', length: data.byteLength * 8 }, false, keyUsages);
-}
-
-async function expandAndSplitPassword(
-    password: Password,
-    salt: NodeJS.TypedArray,
-    iterations: number = 100_000,
-): Promise<[CryptoKey, PasswordVerifier]> {
-    const encoder = new TextEncoder();
-
-    const key: CryptoKey = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, [
-        'deriveBits',
-    ]);
-
-    const expandedKey = await crypto.subtle.deriveBits(
-        {
-            name: 'PBKDF2',
-            hash: 'SHA-512',
-            salt,
-            iterations,
-        },
-        key,
-        512,
-    );
-
-    const firstHalf = expandedKey.slice(0, 32);
-    const lastHalf = expandedKey.slice(32);
-
-    const cryptokey: CryptoKey = await createCryptoKey(firstHalf, ['encrypt', 'decrypt']);
-    const verifier: PasswordVerifier = Buffer.from(lastHalf).toString('base64') as PasswordVerifier;
-
-    return [cryptokey, verifier];
 }
