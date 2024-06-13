@@ -1,5 +1,5 @@
 {
-  "name": "dktp",
+  "name": "@nutgaard/dktp",
   "version": "0.0.0-development",
   "description": "A simple cli to interact with Azure ContainerApps with arm/yaml templates",
   "keywords": [
