@@ -13,9 +13,10 @@ export const wrapCommand: Command = program
     .createCommand('wrap')
     .description('Download secrets, and encrypt environment')
     .argument('<configfile>', 'Path to dktp yaml file')
+    .argument('[outputfile]', 'Path to encrypted vault file')
     .option('-c, --container <container_name>', 'Container name to process (defaults to create a combined env file)')
     .option('-e, --env <env_file>', 'Envfile to use for interpolation')
-    .action(async (configfile, options) => {
+    .action(async (configfile, outputfile, options) => {
         logger.info('Verifying AZ CLI status');
         const azcli = await AZCli.assertLogin();
         exitInvariant(azcli, `Could not resolve AZ cli, or you're not logged in`);
@@ -67,5 +68,9 @@ export const wrapCommand: Command = program
         logger.info(`Creating vault-env content`);
         const encryptedContent = await Encryption.encrypt(password, envFileContent);
 
-        console.log(JSON.stringify(encryptedContent, null, 2));
+        if (outputfile) {
+            getFS().write(outputfile, JSON.stringify(encryptedContent, null, 2));
+        } else {
+            console.log(JSON.stringify(encryptedContent, null, 2));
+        }
     });
