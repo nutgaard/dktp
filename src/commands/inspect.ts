@@ -3,11 +3,19 @@ import path from 'path';
 import { getFS } from '../utils/ifs';
 import { CipherData, Encryption } from '../utils/encryption';
 import { getKeyVerifier } from '../utils/persistent-unlock';
+import { parseEnvEntry, serializeEnv } from '../utils/env-utils';
+import dotenv from 'dotenv';
 
 export const inspectCommand: Command = program
     .createCommand('inspect')
     .argument('<env_file>', 'File to inspect')
-    .action(async (envFile) => {
+    .option(
+        '-o, --override [keyvalue...]',
+        'Override or pass extra environment variable, e.g MY_VAR=abba',
+        parseEnvEntry,
+        {},
+    )
+    .action(async (envFile, options) => {
         const fs = getFS();
         const dirname = path.dirname(envFile);
         const unlockfile = path.join(dirname, '.dktp.unlocked');
@@ -17,9 +25,12 @@ export const inspectCommand: Command = program
         const [key, verifier] = keyVerifier;
         const content = await Encryption.decryptWithKey(key, verifier, vaultFile);
 
+        const env = dotenv.parse(content);
+        dotenv.populate(env, options.override, { override: true });
+
         if (updatedValue) {
             await fs.write(unlockfile, Buffer.from(updatedValue));
         }
 
-        console.log(content);
+        console.log(serializeEnv(env));
     });
