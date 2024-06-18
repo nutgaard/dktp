@@ -8,13 +8,13 @@ import { getKeyVerifier } from '../utils/persistent-unlock';
 
 export const runCommand: Command = program
     .createCommand('run')
-    .option('-e, --env <env_file>', 'Envfile to use for interpolation')
+    .argument('<env_file>', 'Envfile to use for process')
     .argument('<command...>', 'The command to run')
-    .action(async (cmds, options) => {
+    .action(async (envFile, cmds) => {
         const fs = getFS();
-        const dirname = path.dirname(options.env);
+        const dirname = path.dirname(envFile);
         const unlockfile = path.join(dirname, '.dktp.unlocked');
-        const vaultFile: CipherData = await fs.file(options.env).json();
+        const vaultFile: CipherData = await fs.file(envFile).json();
 
         const { keyVerifier, updatedValue } = await getKeyVerifier(unlockfile, vaultFile);
         const [key, verifier] = keyVerifier;

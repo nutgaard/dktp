@@ -6,12 +6,12 @@ import { getKeyVerifier } from '../utils/persistent-unlock';
 
 export const inspectCommand: Command = program
     .createCommand('inspect')
-    .option('-e, --env <env_file>', 'View content of envview')
-    .action(async (options) => {
+    .argument('<env_file>', 'File to inspect')
+    .action(async (envFile) => {
         const fs = getFS();
-        const dirname = path.dirname(options.env);
+        const dirname = path.dirname(envFile);
         const unlockfile = path.join(dirname, '.dktp.unlocked');
-        const vaultFile: CipherData = await fs.file(options.env).json();
+        const vaultFile: CipherData = await fs.file(envFile).json();
 
         const { keyVerifier, updatedValue } = await getKeyVerifier(unlockfile, vaultFile);
         const [key, verifier] = keyVerifier;
