@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 
 export const inspectCommand: Command = program
     .createCommand('inspect')
+    .description('Print content of encrypted lock-file')
     .argument('<env_file>', 'File to inspect')
     .option(
         '-o, --override [keyvalue...]',

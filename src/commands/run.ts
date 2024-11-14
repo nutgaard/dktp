@@ -9,6 +9,7 @@ import { parseEnvEntry } from '../utils/env-utils';
 
 export const runCommand: Command = program
     .createCommand('run')
+    .description('Run command with environment variables from lock-file')
     .argument('<env_file>', 'Envfile to use for process')
     .argument('<command...>', 'The command to run')
     .option(
